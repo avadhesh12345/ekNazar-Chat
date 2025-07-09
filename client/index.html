@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ek Nazar Chat</title>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 400px;
+    height: 80vh;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .header {
+    background-color: #2575fc;
+    color: white;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  #chatBox {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .msg {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f1f1f1;
+    align-self: flex-start;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+
+  /* .msg.self {
+    background-color: #daf8cb;
+    align-self: flex-end;
+  } */
+   
+.msg.self {
+  background-color: #c7f3c7;
+  align-self: flex-end;
+}
+
+  .input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: #fafafa;
+  }
+  .msg {
+  padding: 10px 14px;
+  border-radius: 16px;
+  background-color: #eee;
+  align-self: flex-start;
+  max-width: 75%;
+  word-wrap: break-word;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+  /* #msg {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+  } */
+
+  button {
+    background-color: #2575fc;
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 20px;
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  button:hover {
+    background-color: #1b5ed9;
+  }
+  .msg {
+  margin: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  max-width: 60%;
+  clear: both;
+}
+
+.self {
+  background-color: #dcf8c6;
+  float: right;
+  text-align: right;
+}
+
+.other {
+  background-color: #f1f0f0;
+  float: left;
+  text-align: left;
+}
+@media (max-width: 768px) {
+  .container {
+    width: 95%;
+    height: 90vh;
+    font-size: 16px;
+    border-radius: 10px;
+    margin: auto;
+  }
+
+  .input-area {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .input-area input {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .input-area button {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .msg {
+    font-size: 16px;
+    max-width: 80%;
+  }
+
+  #start-box {
+    width: 95%;
+    margin: 10px auto;
+  }
+}
+
+
+</style>
+
+</head>
+<body>
+  <div id="start-box">
+  <h3>Describe your clothing so the other person can recognize you:</h3>
+  <input id="clue" placeholder="e.g. red hoodie, white shirt..." />
+  <button onclick="submitClue()">Start Chat</button>
+</div>
+
+  <div class="container">
+    <div class="header">🕵️ Ek Nazar - Anonymous Chat</div>
+
+    <div id="chatBox">
+      <!-- Messages will appear here -->
+    </div>
+
+    <div class="input-area">
+      <input id="msg" placeholder="Type your message..." />
+      <button onclick="send()">Send</button>
+    </div>
+  </div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const chatBox = document.getElementById('chatBox');
+  let myClue = '';
+  let myName = '';
+
+  function submitClue() {
+    myClue = document.getElementById('clue').value.trim();
+    if (myClue) {
+      socket.emit('join-with-clue', myClue);
+      document.getElementById('start-box').style.display = 'none';
+    }
+  }
+
+  socket.on('match', data => {
+    myName = data.yourClue;
+    document.querySelector('.input-area').style.display = 'flex';
+  });
+
+  socket.on('message', msg => {
+    const m = document.createElement('div');
+    m.className = 'msg';
+    if (msg.from === myName) m.classList.add('self'); // Right
+    else m.classList.add('other'); // Left
+    m.innerHTML = `<strong>${msg.from}:</strong> ${msg.text}`;
+    chatBox.appendChild(m);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+
+  function send() {
+    const input = document.getElementById('msg');
+    const message = input.value.trim();
+    if (message) {
+      socket.emit('chat', message);
+      input.value = '';
+    }
+  }
+</script>
+
+
+
+</body>
+
+</html>
